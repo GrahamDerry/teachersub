@@ -141,29 +141,37 @@ class LiveSubApp {
         // Add final results to transcript
         if (finalTranscript) {
             this.currentInterimText = '';
-            this.transcript.addLine(finalTranscript);
+            const { transcriptLineElement, recentLineElement } = this.transcript.addLine(finalTranscript);
             this.transcript.setLiveText('');
             
             // Auto-translate the line (teacher-side only)
-            this.autoTranslateLine(finalTranscript);
+            this.autoTranslateLine(finalTranscript, transcriptLineElement, recentLineElement);
         }
     }
 
     /**
      * Auto-translate a transcript line and display below the original
      * @param {string} text - The text to translate
+     * @param {HTMLElement|null} transcriptLineElement - The transcript line element
+     * @param {HTMLElement|null} recentLineElement - The recent line element in live caption area
      */
-    async autoTranslateLine(text) {
+    async autoTranslateLine(text, transcriptLineElement = null, recentLineElement = null) {
         // Skip if source and target languages are the same
         if (!this.translator.shouldTranslate()) {
             console.log('Skipping translation: source and target languages are the same');
             return;
         }
 
-        // Get the last line element that was just added
-        const lineElement = this.transcript.getLastLineElement();
-        if (!lineElement) {
-            console.error('Could not find last line element for translation');
+        // Fall back to getting the last elements if not provided
+        if (!transcriptLineElement) {
+            transcriptLineElement = this.transcript.getLastLineElement();
+        }
+        if (!recentLineElement) {
+            recentLineElement = this.transcript.getLastRecentLineElement();
+        }
+
+        if (!transcriptLineElement && !recentLineElement) {
+            console.error('Could not find any line elements for translation');
             return;
         }
 
@@ -172,7 +180,14 @@ class LiveSubApp {
             const translation = await this.translator.translate(text);
             
             if (translation) {
-                this.transcript.setLineTranslation(lineElement, translation);
+                // Update transcript line
+                if (transcriptLineElement) {
+                    this.transcript.setLineTranslation(transcriptLineElement, translation);
+                }
+                // Update recent line in live caption area
+                if (recentLineElement) {
+                    this.transcript.setRecentLineTranslation(recentLineElement, translation);
+                }
                 console.log(`Translation complete: "${translation}"`);
             }
         } catch (error) {

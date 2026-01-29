@@ -13,6 +13,11 @@ export class TranscriptManager {
         this.lineCount = document.getElementById('lineCount');
         this.transcriptContainer = document.getElementById('transcriptContainer');
         
+        // Recent lines in live caption area
+        this.recentLinesContainer = document.getElementById('recentLines');
+        this.maxRecentLines = 3;
+        this.recentLineElements = [];
+        
         // Validate required elements exist
         if (!this.transcriptContent) {
             throw new Error('transcriptContent element not found');
@@ -25,6 +30,9 @@ export class TranscriptManager {
         }
         if (!this.transcriptContainer) {
             throw new Error('transcriptContainer element not found');
+        }
+        if (!this.recentLinesContainer) {
+            throw new Error('recentLines element not found');
         }
         
         this.updateLineCount();
@@ -218,11 +226,12 @@ export class TranscriptManager {
     /**
      * Add a new line to the transcript
      * @param {string} text - The text to add
+     * @returns {{transcriptLineElement: HTMLElement|null, recentLineElement: HTMLElement}} The created elements
      */
     addLine(text) {
         // Clean up the text
         const cleanText = text.trim();
-        if (!cleanText) return;
+        if (!cleanText) return { transcriptLineElement: null, recentLineElement: null };
 
         console.log('Adding line to transcript:', cleanText);
 
@@ -243,8 +252,12 @@ export class TranscriptManager {
             }
         }
 
-        // Create and add the DOM element
+        // Create and add the DOM element to transcript
         this.createTranscriptLine(cleanText);
+        const transcriptLineElement = this.getLastLineElement();
+        
+        // Add to recent lines display in live caption area
+        const recentLineElement = this.addRecentLine(cleanText);
         
         // Update line count
         this.updateLineCount();
@@ -261,6 +274,8 @@ export class TranscriptManager {
 
         /* --- WebSocket broadcast --- */
         this.broadcastCaption(cleanText);
+        
+        return { transcriptLineElement, recentLineElement };
     }
 
     /**
@@ -333,6 +348,65 @@ export class TranscriptManager {
     }
 
     /**
+     * Add a line to the recent lines display in the live caption area
+     * @param {string} text - The text to display
+     * @returns {HTMLElement} The created line element
+     */
+    addRecentLine(text) {
+        const lineDiv = document.createElement('div');
+        lineDiv.className = 'recent-line';
+        
+        // Original text
+        const textDiv = document.createElement('div');
+        textDiv.className = 'recent-original';
+        textDiv.textContent = text;
+        lineDiv.appendChild(textDiv);
+        
+        // Translation placeholder (hidden initially)
+        const translationDiv = document.createElement('div');
+        translationDiv.className = 'recent-translation hidden';
+        lineDiv.appendChild(translationDiv);
+        
+        // Add to container
+        this.recentLinesContainer.appendChild(lineDiv);
+        this.recentLineElements.push(lineDiv);
+        
+        // Remove oldest if we have too many
+        if (this.recentLineElements.length > this.maxRecentLines) {
+            const oldest = this.recentLineElements.shift();
+            if (oldest && oldest.parentNode) {
+                oldest.remove();
+            }
+        }
+        
+        return lineDiv;
+    }
+
+    /**
+     * Set translation for a recent line element
+     * @param {HTMLElement} lineElement - The recent line element
+     * @param {string} translation - The translated text
+     */
+    setRecentLineTranslation(lineElement, translation) {
+        const translationDiv = lineElement.querySelector('.recent-translation');
+        if (translationDiv && translation) {
+            translationDiv.textContent = translation;
+            translationDiv.classList.remove('hidden');
+        }
+    }
+
+    /**
+     * Get the last recent line element
+     * @returns {HTMLElement|null} The last recent line element or null
+     */
+    getLastRecentLineElement() {
+        if (this.recentLineElements.length > 0) {
+            return this.recentLineElements[this.recentLineElements.length - 1];
+        }
+        return null;
+    }
+
+    /**
      * Handle word click for translation
      * @param {string} word - The clicked word
      * @param {Event} event - The click event
@@ -361,6 +435,9 @@ export class TranscriptManager {
     clear() {
         this.lines = [];
         this.transcriptContent.innerHTML = '';
+        // Clear recent lines display
+        this.recentLinesContainer.innerHTML = '';
+        this.recentLineElements = [];
         this.updateLineCount();
         console.log('Transcript cleared');
     }

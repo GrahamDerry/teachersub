@@ -44,6 +44,37 @@
             padding-left: 0.25rem;
             border-left: 2px solid #D1D5DB;
         }
+        
+        /* Recent lines in live caption area */
+        .recent-line {
+            font-size: 3rem;
+            line-height: 1.2;
+            text-align: center;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E5E7EB;
+            margin-bottom: 0.5rem;
+        }
+        .recent-line:last-child {
+            border-bottom: none;
+            margin-bottom: 1rem;
+        }
+        .recent-line .recent-translation {
+            font-size: 2rem;
+            color: #6B7280;
+            font-style: italic;
+            margin-top: 0.25rem;
+        }
+        
+        /* Larger transcript text to match live caption */
+        .transcript-line .original-text {
+            font-size: 3rem;
+            line-height: 1.3;
+        }
+        .transcript-line .translation-text {
+            font-size: 2rem;
+            margin-top: 0.5rem;
+            padding-left: 0.5rem;
+        }
         .popover {
             z-index: 1000;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
@@ -156,7 +187,7 @@
                     <label for="translationLang" class="text-sm text-gray-600">Translate to:</label>
                     <select id="translationLang" class="bg-white border border-gray-300 text-gray-700 px-3 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent">
                         <option value="en">English</option>
-                        <option value="th">Thai (ไทย)</option>
+                        <option value="th" selected>Thai (ไทย)</option>
                         <option value="zh">Chinese (中文)</option>
                     </select>
                 </div>
@@ -169,7 +200,12 @@
         <!-- Main Content Area -->
         <div class="content-area">
             <!-- Live Caption Area -->
-            <div id="captionArea" class="bg-white shadow-lg p-8 rounded-lg flex items-center justify-center min-h-32 flex-shrink-0">
+            <div id="captionArea" class="bg-white shadow-lg p-8 rounded-lg flex-shrink-0">
+                <!-- Container for recent finalized lines -->
+                <div id="recentLines" class="space-y-4">
+                    <!-- Recent finalized lines will be inserted here -->
+                </div>
+                <!-- Current interim text -->
                 <div id="liveCaption" class="caption-text text-gray-800 text-center">
                     Click "Start" to begin speech recognition...
                 </div>
