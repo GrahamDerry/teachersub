@@ -26,8 +26,14 @@ function addLine(text) {
 
 /* --- reconnecting WS helper --- */
 function connect(retry = 0) {
-  // Use the same hostname as the page, with port 3000 for WebSocket
-  const wsUrl = `ws://${location.hostname}:3000`;
+  const isDevFrontend = location.port === '3001' || location.port === '5173';
+  const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+  // In dev, frontend is on 3001/5173 while backend WebSocket is on 3000.
+  // In production, use same-origin host/port so reverse proxies work cleanly.
+  const devHost = location.hostname === 'localhost' ? '127.0.0.1' : location.hostname;
+  const wsHost = isDevFrontend ? `${devHost}:3000` : location.host;
+  const wsUrl = `${wsProtocol}//${wsHost}`;
   console.log('Student connecting to WebSocket:', wsUrl);
   
   updateStatus('Connecting to teacher...');
